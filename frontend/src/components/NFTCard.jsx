@@ -1,23 +1,42 @@
-import { Link } from "react-router-dom";
+import { formatEther } from "ethers";
 
-export default function NFTCard({ nft }) {
+export default function NFTCard({
+  image,
+  name,
+  price,
+  listed,
+  showBuy,
+  onBuy,
+}) {
   return (
-    <Link
-      to={`/item/${nft.tokenId}`}
-      className="bg-[#121826] border border-[#273043] rounded-2xl overflow-hidden hover:scale-[1.02] transition"
-    >
+    <div className="border rounded-xl overflow-hidden hover:shadow-lg transition">
       <img
-        src={nft.image}
-        alt=""
+        src={image}
         className="h-56 w-full object-cover"
+        alt={name}
       />
 
       <div className="p-4">
-        <h3 className="font-semibold">{nft.name}</h3>
-        <p className="text-sm text-gray-400">
-          {nft.price} ETH
-        </p>
+        <h3 className="font-bold">{name}</h3>
+
+        {listed && (
+          <p className="mt-2 font-semibold">
+            {formatEther(price)} ETH
+          </p>
+        )}
+
+        {showBuy && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onBuy();
+            }}
+            className="mt-3 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          >
+            Buy
+          </button>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }

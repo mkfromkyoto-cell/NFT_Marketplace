@@ -1,34 +1,74 @@
+// src/pages/Navbar.jsx
 import { Link } from "react-router-dom";
-import { connectWallet } from "../utils/connectWallet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { BrowserProvider } from "ethers";
 
 export default function Navbar() {
   const [account, setAccount] = useState(null);
 
-  async function handleConnect() {
-    const acc = await connectWallet();
-    setAccount(acc);
+  useEffect(() => {
+    checkWallet();
+  }, []);
+
+  async function checkWallet() {
+    if (!window.ethereum) return;
+
+    const provider = new BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_accounts", []);
+    if (accounts.length > 0) {
+      setAccount(accounts[0]);
+    }
+  }
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      alert("MetaMask not found");
+      return;
+    }
+
+    const provider = new BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+    setAccount(accounts[0]);
   }
 
   return (
-    <nav className="w-full px-6 py-4 bg-[#0b0f19] border-b border-[#1f2937] flex justify-between items-center">
+    <nav className="flex items-center justify-between px-8 py-4 border-b">
+      {/* Logo */}
       <Link to="/" className="text-xl font-bold">
-        NFT Marketplace
+        Art Gallery
       </Link>
 
-      <div className="flex gap-6 items-center">
-        <Link to="/">Marketplace</Link>
-        <Link to="/my-nfts">My NFTs</Link>
-        <Link to="/mint">Mint</Link>
+      {/* Navigation */}
+      <div className="flex items-center gap-6">
+        <Link to="/collections" className="hover:underline">
+          Collections
+        </Link>
 
-        <button
-          onClick={handleConnect}
-          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700"
-        >
-          {account
-            ? `${account.slice(0, 6)}...${account.slice(-4)}`
-            : "Connect"}
-        </button>
+        <Link to="/mynfts" className="hover:underline">
+          My NFTs
+        </Link>
+
+        <Link to="/create" className="hover:underline">
+          Create Collection
+        </Link>
+
+        <Link to="/mint" className="hover:underline">
+          Mint NFT
+        </Link>
+
+        {/* Wallet */}
+        {account ? (
+          <span className="px-4 py-2 border rounded text-sm">
+            {account.slice(0, 6)}...{account.slice(-4)}
+          </span>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="bg-black text-white px-4 py-2 rounded"
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
     </nav>
   );
