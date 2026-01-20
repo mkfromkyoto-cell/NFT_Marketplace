@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
 
 import Collections from "./pages/Collections";
 import CreateCollection from "./pages/CreateCollection";
@@ -22,9 +23,7 @@ export default function App() {
         <Route
           path="/"
           element={
-            <div className="p-20 text-center text-4xl font-bold">
-              Welcome to Art Gallery
-            </div>
+            <Home />
           }
         />
 
@@ -41,6 +40,7 @@ export default function App() {
           element={<CollectionDetail />}
         />
 
+          {/* Artist Profile */}
         <Route path="/artist/:address" element={<Artist />} />
         <Route path="/artist/edit/profile" element={<EditArtistProfile />} />
         
