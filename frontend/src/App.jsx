@@ -9,7 +9,8 @@ import MyNFTs from "./pages/MyNFTs";
 import CollectionDetail from "./pages/CollectionDetail";
 import NFTDetail from "./pages/NFTDetail";
 import MintNFT from "./pages/MintNFT";
-import Artist from "./pages/Artist";
+import Artist from "./pages/artist";
+import EditArtistProfile from "./pages/EditArtistProfile";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         />
 
         <Route path="/artist/:address" element={<Artist />} />
+        <Route path="/artist/edit/profile" element={<EditArtistProfile />} />
         
         {/* NFT DETAIL */}
         <Route
