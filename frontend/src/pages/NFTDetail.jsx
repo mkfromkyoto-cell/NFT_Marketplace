@@ -10,24 +10,16 @@ const ipfs = (u) =>
   u?.replace("ipfs://", "https://ipfs.io/ipfs/");
 
 export default function NFTDetail() {
-  /* =========================
-     ROUTE PARAMS (FIXED)
-  ========================== */
   const { collection, tokenId } = useParams();
   const navigate = useNavigate();
 
-  /* =========================
-     STATE
-  ========================== */
   const [user, setUser] = useState("");
   const [nft, setNft] = useState(null);
   const [listing, setListing] = useState(null);
+  const [artist, setArtist] = useState("");
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(true);
 
-  /* =========================
-     LOAD NFT
-  ========================== */
   useEffect(() => {
     if (!collection || !tokenId) return;
     load();
@@ -42,7 +34,6 @@ export default function NFTDetail() {
       const userAddr = (await signer.getAddress()).toLowerCase();
       setUser(userAddr);
 
-      /* Contracts */
       const nftContract = new ethers.Contract(
         collection,
         GalleryABI.abi,
@@ -55,9 +46,22 @@ export default function NFTDetail() {
         provider
       );
 
-      /* Owner + Listing */
+      /* Owner */
       const owner = (await nftContract.ownerOf(tokenId)).toLowerCase();
+
+      /* Listing */
       const listingData = await market.listings(collection, tokenId);
+
+      /* 🎨 Artist (ERC-2981 royalty receiver) */
+      try {
+        const [receiver] = await nftContract.royaltyInfo(
+          tokenId,
+          ethers.parseEther("1")
+        );
+        setArtist(receiver.toLowerCase());
+      } catch {
+        setArtist("");
+      }
 
       /* Metadata */
       const tokenURI = await nftContract.tokenURI(tokenId);
@@ -92,10 +96,6 @@ export default function NFTDetail() {
     }
   }
 
-  /* =========================
-     ACTIONS
-  ========================== */
-
   async function handleApproveAndList() {
     if (!price || Number(price) <= 0) {
       alert("Enter valid price");
@@ -118,24 +118,18 @@ export default function NFTDetail() {
         signer
       );
 
-      /* Approve marketplace (required for escrow) */
-      const owner = await nftContract.ownerOf(tokenId);
-
-      if (owner.toLowerCase() === user) {
-        const approved = await nftContract.getApproved(tokenId);
-        if (
-          approved.toLowerCase() !==
-          import.meta.env.VITE_MARKETPLACE_ADDRESS.toLowerCase()
-        ) {
-          const txApprove = await nftContract.approve(
-            import.meta.env.VITE_MARKETPLACE_ADDRESS,
-            tokenId
-          );
-          await txApprove.wait();
-        }
+      const approved = await nftContract.getApproved(tokenId);
+      if (
+        approved.toLowerCase() !==
+        import.meta.env.VITE_MARKETPLACE_ADDRESS.toLowerCase()
+      ) {
+        const txApprove = await nftContract.approve(
+          import.meta.env.VITE_MARKETPLACE_ADDRESS,
+          tokenId
+        );
+        await txApprove.wait();
       }
 
-      /* List */
       const tx = await market.listItem(
         collection,
         tokenId,
@@ -146,7 +140,6 @@ export default function NFTDetail() {
       await load();
     } catch (err) {
       console.error("Listing failed:", err);
-      alert("Listing failed");
     }
   }
 
@@ -165,12 +158,10 @@ export default function NFTDetail() {
         value: listing.price,
       });
       await tx.wait();
-      window.location.reload();
 
       navigate("/mynfts");
     } catch (err) {
       console.error("Buy failed:", err);
-      alert("Purchase failed");
     }
   }
 
@@ -191,13 +182,9 @@ export default function NFTDetail() {
       await load();
     } catch (err) {
       console.error("Cancel failed:", err);
-      alert("Cancel failed");
     }
   }
 
-  /* =========================
-     UI LOGIC
-  ========================== */
   if (loading || !nft) {
     return <div className="p-12 text-center">Loading...</div>;
   }
@@ -217,17 +204,29 @@ export default function NFTDetail() {
       <div>
         <h1 className="text-3xl font-bold">{nft.name}</h1>
 
+        {/* 🎨 ARTIST */}
+        {artist && (
+          <p className="mt-2 text-sm text-gray-500">
+            Artist:{" "}
+            <span
+              onClick={() => navigate(`/artist/${artist}`)}
+              className="font-mono cursor-pointer text-blue-500 hover:underline"
+            >
+              {artist.slice(0, 6)}...{artist.slice(-4)}
+            </span>
+          </p>
+        )}  
+
         {nft.description && (
-          <p className="mt-2 text-gray-500">{nft.description}</p>
+          <p className="mt-4 text-gray-400">{nft.description}</p>
         )}
 
         {isListed && (
-          <p className="mt-4 text-xl font-semibold">
+          <p className="mt-6 text-xl font-semibold">
             {ethers.formatEther(listing.price)} ETH
           </p>
         )}
 
-        {/* BUY */}
         {isListed && !isSeller && (
           <button
             onClick={handleBuy}
@@ -237,7 +236,6 @@ export default function NFTDetail() {
           </button>
         )}
 
-        {/* CANCEL */}
         {isSeller && (
           <button
             onClick={handleCancel}
@@ -247,7 +245,6 @@ export default function NFTDetail() {
           </button>
         )}
 
-        {/* LIST */}
         {!isListed && isOwner && (
           <div className="mt-6">
             <input

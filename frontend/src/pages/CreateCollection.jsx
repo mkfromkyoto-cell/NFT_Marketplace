@@ -9,7 +9,6 @@ import {
 export default function CreateCollection() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
-  const [royalty, setRoyalty] = useState("");
   const [description, setDescription] = useState("");
   const [bannerFile, setBannerFile] = useState(null);
 
@@ -17,7 +16,7 @@ export default function CreateCollection() {
   const [error, setError] = useState("");
 
   async function handleCreate() {
-    if (!name || !symbol || !royalty || !bannerFile) {
+    if (!name || !symbol || !bannerFile) {
       setError("All fields are required");
       return;
     }
@@ -48,15 +47,10 @@ export default function CreateCollection() {
         signer
       );
 
-      // royalty is % → basis points
-      const royaltyBps = Math.floor(Number(royalty) * 100);
-
       const tx = await factory.createCollection(
         name,
         symbol,
         collectionURI,
-        royaltyBps,
-        0 // mintFee (or add input)
       );
 
       await tx.wait();
@@ -65,7 +59,6 @@ export default function CreateCollection() {
 
       setName("");
       setSymbol("");
-      setRoyalty("");
       setDescription("");
       setBannerFile(null);
     } catch (err) {
@@ -101,20 +94,7 @@ export default function CreateCollection() {
           />
         </label>
 
-        <label className="block mb-4">
-          <span className="text-sm text-gray-400">
-            Royalty (%) — max 10%
-          </span>
-          <input
-            type="number"
-            step="0.1"
-            max="10"
-            className="mt-1 w-full p-3 rounded-xl bg-[#0b0f19] border border-[#273043]"
-            value={royalty}
-            onChange={(e) => setRoyalty(e.target.value)}
-          />
-        </label>
-
+        
         <label className="block mb-4">
           <span className="text-sm text-gray-400">Description</span>
           <textarea

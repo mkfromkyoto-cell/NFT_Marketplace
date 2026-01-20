@@ -12,59 +12,52 @@ contract GalleryNFT is ERC721, IERC2981, Ownable {
     Counters.Counter private _tokenIds;
 
     /* =========================
-       COLLECTION METADATA
+       METADATA
     ========================== */
     string public collectionURI;
-
     mapping(uint256 => string) private _tokenURIs;
 
     /* =========================
-       MINT FEES
+       FEES
     ========================== */
     uint256 public mintFee;
-    address public feeReceiver;
+    address public platform; // deployer
 
     /* =========================
-       ROYALTIES (ERC-2981)
-       fee in basis points
+       ROYALTY (PER TOKEN ARTIST)
     ========================== */
-    address private _royaltyReceiver;
-    uint96 private _royaltyFee; // max 1000 = 10%
+    uint96 public royaltyFee; // basis points
+    mapping(uint256 => address) private _artist;
 
     constructor(
         string memory name_,
         string memory symbol_,
         string memory collectionURI_,
-        address creator,
-        address royaltyReceiver_,
         uint96 royaltyFee_,
-        uint256 mintFee_
+        uint256 mintFee_,
+        address platform_
     ) ERC721(name_, symbol_) {
-        require(royaltyFee_ <= 1000, "Max 10% royalty");
+        require(royaltyFee_ <= 1000, "Max 10%");
 
         collectionURI = collectionURI_;
-
-        _royaltyReceiver = royaltyReceiver_;
-        _royaltyFee = royaltyFee_;
-
+        royaltyFee = royaltyFee_;
         mintFee = mintFee_;
-        feeReceiver = creator;
+        platform = platform_;
 
-        _transferOwnership(creator);
+        _transferOwnership(msg.sender);
     }
 
     /* =========================
-       PUBLIC MINT (WITH FEE)
+       MINT
     ========================== */
     function mint(string calldata tokenURI)
         external
         payable
         returns (uint256)
     {
-        require(msg.value == mintFee, "Incorrect mint fee");
+        require(msg.value == mintFee, "Wrong mint fee");
 
-        // pay mint fee
-        (bool sent, ) = feeReceiver.call{value: msg.value}("");
+        (bool sent, ) = platform.call{value: msg.value}("");
         require(sent, "Fee transfer failed");
 
         _tokenIds.increment();
@@ -72,46 +65,24 @@ contract GalleryNFT is ERC721, IERC2981, Ownable {
 
         _safeMint(msg.sender, tokenId);
         _tokenURIs[tokenId] = tokenURI;
+        _artist[tokenId] = msg.sender;
 
         return tokenId;
-    }
-
-    /* =========================
-       ADMIN — MINT FEES
-    ========================== */
-    function setMintFee(uint256 fee) external onlyOwner {
-        mintFee = fee;
     }
 
     function tokenCounter() external view returns (uint256) {
         return _tokenIds.current();
     }
 
-    function setFeeReceiver(address receiver) external onlyOwner {
-        feeReceiver = receiver;
-    }
-
-    /* =========================
-       ADMIN — ROYALTIES
-    ========================== */
-    function setRoyalty(address receiver, uint96 fee)
-        external
-        onlyOwner
-    {
-        require(fee <= 1000, "Max 10%");
-        _royaltyReceiver = receiver;
-        _royaltyFee = fee;
-    }
-
     /* =========================
        ERC-2981
     ========================== */
     function royaltyInfo(
-        uint256,
+        uint256 tokenId,
         uint256 salePrice
     ) external view override returns (address, uint256) {
-        uint256 royaltyAmount = (salePrice * _royaltyFee) / 10000;
-        return (_royaltyReceiver, royaltyAmount);
+        uint256 amount = (salePrice * royaltyFee) / 10000;
+        return (_artist[tokenId], amount);
     }
 
     /* =========================
@@ -127,16 +98,6 @@ contract GalleryNFT is ERC721, IERC2981, Ownable {
         return _tokenURIs[tokenId];
     }
 
-    function setCollectionURI(string calldata uri)
-        external
-        onlyOwner
-    {
-        collectionURI = uri;
-    }
-
-    /* =========================
-       INTERFACE SUPPORT
-    ========================== */
     function supportsInterface(bytes4 interfaceId)
         public
         view

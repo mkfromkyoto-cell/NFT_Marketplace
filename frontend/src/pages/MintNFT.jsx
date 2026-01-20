@@ -104,9 +104,8 @@ export default function MintNFT() {
       const mintFee = await nft.mintFee();
 
       const tx = await nft.mint(tokenURI, {
-        value: mintFee
+        value: mintFee.toString(),
       });
-      await tx.wait();
       await tx.wait();
 
       /* Reset form */
