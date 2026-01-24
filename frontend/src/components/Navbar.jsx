@@ -65,6 +65,8 @@ export default function Navbar() {
           <Link to="/mint" className={isActive("/mint")}>
             Mint
           </Link>
+
+          <Link to="/auctions" className={isActive("/auctions")}>Auctions</Link>
         </div>
 
         {/* WALLET */}

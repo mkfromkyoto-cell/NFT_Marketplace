@@ -12,6 +12,9 @@ import NFTDetail from "./pages/NFTDetail";
 import MintNFT from "./pages/MintNFT";
 import Artist from "./pages/artist";
 import EditArtistProfile from "./pages/EditArtistProfile";
+import AuctionList from "./pages/AuctionList";
+import AuctionDetail from "./pages/AuctionDetail";
+
 
 export default function App() {
   return (
@@ -20,12 +23,7 @@ export default function App() {
 
       <Routes>
         {/* HOME */}
-        <Route
-          path="/"
-          element={
-            <Home />
-          }
-        />
+        <Route path="/" element={ <Home /> } />
 
         {/* CREATE COLLECTION */}
         <Route path="/create" element={<CreateCollection />} />
@@ -52,6 +50,9 @@ export default function App() {
 
         {/* MINT */}
         <Route path="/mint" element={<MintNFT />} />
+
+        <Route path="/auctions" element={<AuctionList />} /> {/* Optional separate route */}
+        <Route path="/auction/:auctionId" element={<AuctionDetail />} />
       </Routes>
     </BrowserRouter>
   );

@@ -5,9 +5,32 @@ import { ethers } from "ethers";
 
 import GalleryABI from "../abis/GalleryNFT.json";
 import MarketplaceABI from "../abis/GalleryMarketplace.json";
+import AuctionABI from "../abis/GalleryAuction.json";
 
 const ipfs = (u) =>
   u?.replace("ipfs://", "https://ipfs.io/ipfs/");
+
+function AuctionTimer({ endTime }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  const diff = endTime * 1000 - now;
+  if (diff <= 0) return <span className="text-red-400">Auction ended</span>;
+
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+
+  return (
+    <span className="text-sm text-gray-400">
+      Ends in {h}h {m}m {s}s
+    </span>
+  );
+}
 
 export default function NFTDetail() {
   const { collection, tokenId } = useParams();
@@ -19,6 +42,12 @@ export default function NFTDetail() {
   const [artist, setArtist] = useState("");
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const [auction, setAuction] = useState(null);
+  const [startPrice, setStartPrice] = useState("");
+  const [duration, setDuration] = useState("24");
+  const [bidAmount, setBidAmount] = useState("");
+
 
   useEffect(() => {
     if (!collection || !tokenId) return;
@@ -43,6 +72,12 @@ export default function NFTDetail() {
       const market = new ethers.Contract(
         import.meta.env.VITE_MARKETPLACE_ADDRESS,
         MarketplaceABI.abi,
+        provider
+      );
+
+      const auctionContract = new ethers.Contract(
+        import.meta.env.VITE_AUCTION_ADDRESS,
+        AuctionABI.abi,
         provider
       );
 
@@ -82,6 +117,21 @@ export default function NFTDetail() {
             }
           : null
       );
+      // 🔹 find auction
+      let found = null;
+      const total = await auctionContract.auctionCounter();
+      for (let i = 1; i <= Number(total); i++) {
+        const a = await auctionContract.auctions(i);
+        if (
+          a.nft.toLowerCase() === collection.toLowerCase() &&
+          Number(a.tokenId) === Number(tokenId) &&
+          !a.settled
+        ) {
+          found = { id: i, ...a };
+          break;
+        }
+      }
+      setAuction(found);
     } catch (err) {
       console.error("NFT load failed:", err);
     } finally {
@@ -178,6 +228,95 @@ export default function NFTDetail() {
     }
   }
 
+  /* =========================
+     AUCTION
+  ========================== */
+
+  async function handleCreateAuction() {
+    if (!startPrice || Number(startPrice) <= 0) return alert("Invalid price");
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(collection, GalleryABI.abi, signer);
+    const auctionContract = new ethers.Contract(
+      import.meta.env.VITE_AUCTION_ADDRESS,
+      AuctionABI.abi,
+      signer
+    );
+
+    const approved = await nftContract.getApproved(tokenId);
+    if (
+      approved.toLowerCase() !==
+      import.meta.env.VITE_AUCTION_ADDRESS.toLowerCase()
+    ) {
+      const tx = await nftContract.approve(
+        import.meta.env.VITE_AUCTION_ADDRESS,
+        tokenId
+      );
+      await tx.wait();
+    }
+
+    const tx = await auctionContract.createAuction(
+      collection,
+      tokenId,
+      ethers.parseEther(startPrice),
+      Number(duration) * 3600
+    );
+    await tx.wait();
+
+    await load();
+  }
+
+  async function handleBid() {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const auctionContract = new ethers.Contract(
+      import.meta.env.VITE_AUCTION_ADDRESS,
+      AuctionABI.abi,
+      signer
+    );
+
+    const tx = await auctionContract.bid(auction.id, {
+      value: ethers.parseEther(bidAmount),
+    });
+    await tx.wait();
+
+    setBidAmount("");
+    await load();
+  }
+
+  async function handleSettle() {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const auctionContract = new ethers.Contract(
+      import.meta.env.VITE_AUCTION_ADDRESS,
+      AuctionABI.abi,
+      signer
+    );
+
+    const tx = await auctionContract.settleAuction(auction.id);
+    await tx.wait();
+
+    await load();
+  }
+
+  async function handleWithdraw() {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const auctionContract = new ethers.Contract(
+      import.meta.env.VITE_AUCTION_ADDRESS,
+      AuctionABI.abi,
+      signer
+    );
+
+    const tx = await auctionContract.withdraw();
+    await tx.wait();
+  }
+
   if (loading || !nft) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400">
@@ -189,6 +328,7 @@ export default function NFTDetail() {
   const isListed = !!listing;
   const isSeller = isListed && listing.seller === user;
   const isOwner = nft.owner === user;
+  const canList = !isListed && !auction && isOwner;
 
   return (
     <main className="min-h-screen bg-[#0b0f19] text-white">
@@ -245,7 +385,6 @@ export default function NFTDetail() {
           )}
 
           <div className="mt-8 space-y-1 text-sm text-gray-500">
-            <p>Edition: 1 of 1</p>
             <p>Contract: {collection.slice(0, 6)}…</p>
           </div>
 
@@ -297,6 +436,79 @@ export default function NFTDetail() {
                 </button>
               </div>
             )}
+             {auction && (
+            <div className="mt-8 p-6 rounded-2xl border border-gray-700 space-y-3">
+              <AuctionTimer endTime={Number(auction.endTime)} />
+              <p className="text-lg">
+                Highest bid:{" "}
+                {auction.highestBid > 0n
+                  ? `${ethers.formatEther(auction.highestBid)} ETH`
+                  : "No bids"}
+              </p>
+
+              {Date.now() / 1000 < auction.endTime && (
+                <>
+                  <input
+                    placeholder="Bid ETH"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    className="w-full bg-transparent border rounded-xl px-4 py-3"
+                  />
+                  <button
+                    onClick={handleBid}
+                    className="w-full py-3 rounded-full bg-white text-black"
+                  >
+                    Place Bid
+                  </button>
+                </>
+              )}
+
+              {Date.now() / 1000 >= auction.endTime && (
+                <button
+                  onClick={handleSettle}
+                  className="w-full py-3 rounded-full border"
+                >
+                  Settle Auction
+                </button>
+              )}
+
+              <button
+                onClick={handleWithdraw}
+                className="text-sm text-gray-400"
+              >
+                Withdraw ETH
+              </button>
+            </div>
+          )}
+
+          {canList && (
+            <div className="mt-8 space-y-3">
+              
+
+              <div className="pt-4 border-t border-gray-700 space-y-3">
+                <input
+                  placeholder="Auction start price (ETH)"
+                  value={startPrice}
+                  onChange={(e) => setStartPrice(e.target.value)}
+                  className="w-full bg-transparent border rounded-xl px-4 py-3"
+                />
+
+                <input
+                  placeholder="Duration (hours)"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="w-full bg-transparent border rounded-xl px-4 py-3"
+                />
+
+                <button
+                  onClick={handleCreateAuction}
+                  className="w-full py-3 rounded-full border"
+                >
+                  Start Auction
+                </button>
+              </div>
+            </div>
+          )}
           </div>
         </div>
       </section>
