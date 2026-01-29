@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 
-import FactoryABI from "../abis/CollectionFactory.json";
 import AuctionABI from "../abis/GalleryAuction.json";
 import GalleryABI from "../abis/GalleryNFT.json";
 
