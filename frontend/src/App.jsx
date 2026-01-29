@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
 
 import Collections from "./pages/Collections";
 import CreateCollection from "./pages/CreateCollection";
@@ -11,6 +12,9 @@ import NFTDetail from "./pages/NFTDetail";
 import MintNFT from "./pages/MintNFT";
 import Artist from "./pages/artist";
 import EditArtistProfile from "./pages/EditArtistProfile";
+import AuctionList from "./pages/AuctionList";
+import AuctionDetail from "./pages/AuctionDetail";
+
 
 export default function App() {
   return (
@@ -19,14 +23,7 @@ export default function App() {
 
       <Routes>
         {/* HOME */}
-        <Route
-          path="/"
-          element={
-            <div className="p-20 text-center text-4xl font-bold">
-              Welcome to Art Gallery
-            </div>
-          }
-        />
+        <Route path="/" element={ <Home /> } />
 
         {/* CREATE COLLECTION */}
         <Route path="/create" element={<CreateCollection />} />
@@ -41,6 +38,7 @@ export default function App() {
           element={<CollectionDetail />}
         />
 
+          {/* Artist Profile */}
         <Route path="/artist/:address" element={<Artist />} />
         <Route path="/artist/edit/profile" element={<EditArtistProfile />} />
         
@@ -52,6 +50,9 @@ export default function App() {
 
         {/* MINT */}
         <Route path="/mint" element={<MintNFT />} />
+
+        <Route path="/auctions" element={<AuctionList />} /> {/* Optional separate route */}
+        <Route path="/auction/:auctionId" element={<AuctionDetail />} />
       </Routes>
     </BrowserRouter>
   );

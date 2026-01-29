@@ -34,7 +34,6 @@ export default function Collections() {
           const disabled =
             await factory.disabledCollections(addr);
 
-          // 🚫 HIDE DELETED COLLECTIONS
           if (disabled) return null;
 
           const nft = new ethers.Contract(
@@ -76,45 +75,88 @@ export default function Collections() {
     }
   }
 
+  /* =========================
+     UI
+  ========================== */
+
   if (loading) {
-    return <div className="p-8">Loading collections...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Loading exhibitions…
+      </div>
+    );
   }
 
   if (collections.length === 0) {
     return (
-      <div className="p-8 text-gray-500">
-        No collections available
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        No exhibitions available
       </div>
     );
   }
 
   return (
-    <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-      {collections.map((c) => (
-        <Link
-          key={c.address}
-          to={`/collection/${c.address}`}
-          className="border rounded-xl overflow-hidden hover:shadow-lg transition"
-        >
-          {c.banner ? (
-            <img
-              src={c.banner}
-              className="h-40 w-full object-cover"
-            />
-          ) : (
-            <div className="h-40 bg-gray-200 flex items-center justify-center">
-              No Banner
-            </div>
-          )}
+    <main className="min-h-screen bg-[#0b0f19] text-white">
+      {/* HEADER */}
+      <section className="max-w-7xl mx-auto px-6 pt-24 pb-20">
+        <p className="text-xs uppercase tracking-widest text-gray-400 mb-6">
+          Current Exhibitions
+        </p>
 
-          <div className="p-4">
-            <h2 className="font-bold text-lg">{c.name}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {c.description}
-            </p>
-          </div>
-        </Link>
-      ))}
-    </div>
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+          Explore Curated Collections
+        </h1>
+
+        <p className="mt-6 max-w-2xl text-gray-300 leading-relaxed">
+          Each collection is an exhibition space curated by its artist.
+          Discover artworks thoughtfully presented — never overcrowded.
+        </p>
+      </section>
+
+      {/* EXHIBITION GRID */}
+      <section className="max-w-7xl mx-auto px-6 pb-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
+          {collections.map((c) => (
+            <Link
+              key={c.address}
+              to={`/collection/${c.address}`}
+              className="group"
+            >
+              <div className="overflow-hidden rounded-2xl bg-[#111827]">
+                {/* BANNER */}
+                {c.banner ? (
+                  <img
+                    src={c.banner}
+                    alt={c.name}
+                    className="w-full h-56 object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="w-full h-56 bg-[#1f2937] flex items-center justify-center text-gray-500 text-sm">
+                    No Banner
+                  </div>
+                )}
+
+                {/* INFO */}
+                <div className="p-6">
+                  <h2 className="text-xl font-medium">
+                    {c.name}
+                  </h2>
+
+                  {c.description && (
+                    <p className="mt-3 text-sm text-gray-400 leading-relaxed line-clamp-3">
+                      {c.description}
+                    </p>
+                  )}
+
+                  <p className="mt-6 text-sm text-gray-500 group-hover:text-white transition">
+                    View Exhibition →
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }

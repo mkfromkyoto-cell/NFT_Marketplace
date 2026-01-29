@@ -108,7 +108,7 @@ export default function MintNFT() {
       });
       await tx.wait();
 
-      /* Reset form */
+      /* Reset */
       setName("");
       setDescription("");
       setImageFile(null);
@@ -127,83 +127,123 @@ export default function MintNFT() {
      UI
   ========================== */
   return (
-    <div className="min-h-screen bg-[#0b0f19] flex justify-center px-6 py-12">
-      <div className="w-full max-w-xl bg-[#121826] rounded-2xl p-8 border border-[#1f2937]">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Mint NFT
+    <main className="min-h-screen bg-[#0b0f19] text-white">
+      {/* HEADER */}
+      <section className="max-w-5xl mx-auto px-6 pt-28 pb-20">
+        <p className="text-xs uppercase tracking-widest text-gray-400 mb-6">
+          Artist Studio
+        </p>
+
+        <h1 className="text-4xl font-semibold tracking-tight">
+          Mint New Artwork
         </h1>
 
-        {/* COLLECTION SELECT */}
-        <label className="block mb-4">
-          <span className="text-sm text-gray-400">
-            Select Collection
-          </span>
-          <select
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="mt-1 w-full p-3 rounded-xl bg-[#0b0f19] border border-[#273043]"
-          >
-            <option value="">Choose collection</option>
-            {collections.map((c) => (
-              <option key={c.address} value={c.address}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="mt-6 max-w-2xl text-gray-300 leading-relaxed">
+          Create a new artwork and place it into one of the active
+          collections. Each mint permanently records your work on-chain.
+        </p>
+      </section>
 
-        {/* NAME */}
-        <label className="block mb-4">
-          <span className="text-sm text-gray-400">
-            NFT Name
-          </span>
-          <input
-            className="mt-1 w-full p-3 rounded-xl bg-[#0b0f19] border border-[#273043]"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
+      {/* FORM */}
+      <section className="max-w-3xl mx-auto px-6 pb-32">
+        <div className="space-y-14">
+          {/* COLLECTION */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-3">
+              Select Collection
+            </label>
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-700 py-3 text-lg focus:outline-none focus:border-white transition"
+            >
+              <option value="">Choose collection</option>
+              {collections.map((c) => (
+                <option
+                  key={c.address}
+                  value={c.address}
+                  className="bg-[#0b0f19]"
+                >
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* DESCRIPTION */}
-        <label className="block mb-4">
-          <span className="text-sm text-gray-400">
-            Description
-          </span>
-          <textarea
-            rows={4}
-            className="mt-1 w-full p-3 rounded-xl bg-[#0b0f19] border border-[#273043]"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
+          {/* NAME */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-3">
+              Artwork Title
+            </label>
+            <input
+              className="w-full bg-transparent border-b border-gray-700 py-3 text-lg focus:outline-none focus:border-white transition"
+              placeholder="Untitled No. 1"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-        {/* IMAGE */}
-        <label className="block mb-6">
-          <span className="text-sm text-gray-400">
-            Image
-          </span>
-          <input
-            type="file"
-            accept="image/*"
-            className="mt-2 text-sm"
-            onChange={(e) => setImageFile(e.target.files[0])}
-          />
-        </label>
+          {/* DESCRIPTION */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-3">
+              Description
+            </label>
+            <textarea
+              rows={4}
+              className="w-full bg-transparent border border-gray-700 rounded-xl p-4 text-gray-200 focus:outline-none focus:border-white transition"
+              placeholder="Concept, medium, or artistic intention…"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
 
-        {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
-            {error}
-          </p>
-        )}
+          {/* IMAGE */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-4">
+              Artwork Image
+            </label>
 
-        <button
-          onClick={handleMint}
-          disabled={loading}
-          className="w-full py-3 rounded-xl bg-blue-600 font-semibold hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Minting..." : "Mint NFT"}
-        </button>
-      </div>
-    </div>
+            <div className="relative border border-dashed border-gray-600 rounded-2xl p-10 text-center hover:border-gray-400 transition">
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) =>
+                  setImageFile(e.target.files[0])
+                }
+              />
+
+              <p className="text-gray-300">
+                {imageFile
+                  ? imageFile.name
+                  : "Click to upload artwork image"}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                High-resolution, square format recommended
+              </p>
+            </div>
+          </div>
+
+          {/* ERROR */}
+          {error && (
+            <p className="text-red-500 text-sm text-center">
+              {error}
+            </p>
+          )}
+
+          {/* ACTION */}
+          <div className="pt-10">
+            <button
+              onClick={handleMint}
+              disabled={loading}
+              className="w-full py-4 rounded-full bg-white text-black font-medium text-lg hover:bg-gray-200 transition disabled:opacity-50"
+            >
+              {loading ? "Minting Artwork…" : "Mint Artwork"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

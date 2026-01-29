@@ -3,19 +3,62 @@ const hre = require("hardhat");
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
 
-  console.log("Deploying with:", deployer.address);
+  console.log("Deploying contracts with:", deployer.address);
+  console.log("Account balance:", (await deployer.provider.getBalance(deployer.address)).toString());
 
-  /* Marketplace */
-  const Marketplace = await hre.ethers.getContractFactory("GalleryMarketplace");
-  const marketplace = await Marketplace.deploy(250); // 2.5%
+  /* =========================
+     MARKETPLACE
+  ========================== */
+
+  const Marketplace = await hre.ethers.getContractFactory(
+    "GalleryMarketplace"
+  );
+
+  // 250 = 2.5% marketplace fee
+  const marketplace = await Marketplace.deploy(250);
   await marketplace.waitForDeployment();
-  console.log("Marketplace deployed to:", await marketplace.getAddress());
 
-  /* Factory */
-  const Factory = await hre.ethers.getContractFactory("CollectionFactory");
-  const factory = await Factory.deploy(deployer.address); // ✅ FIX
+  const marketplaceAddress = await marketplace.getAddress();
+  console.log("GalleryMarketplace deployed to:", marketplaceAddress);
+
+  /* =========================
+     AUCTION
+  ========================== */
+
+  const Auction = await hre.ethers.getContractFactory(
+    "GalleryAuction"
+  );
+
+  // 250 = 2.5% auction marketplace fee
+  const auction = await Auction.deploy(250);
+  await auction.waitForDeployment();
+
+  const auctionAddress = await auction.getAddress();
+  console.log("GalleryAuction deployed to:", auctionAddress);
+
+  /* =========================
+     COLLECTION FACTORY
+  ========================== */
+
+  const Factory = await hre.ethers.getContractFactory(
+    "CollectionFactory"
+  );
+
+  // Platform = deployer (receives mint fees)
+  const factory = await Factory.deploy(deployer.address);
   await factory.waitForDeployment();
-  console.log("Factory deployed to:", await factory.getAddress());
+
+  const factoryAddress = await factory.getAddress();
+  console.log("CollectionFactory deployed to:", factoryAddress);
+
+  /* =========================
+     SUMMARY
+  ========================== */
+
+  console.log("\n=== DEPLOYMENT SUMMARY ===");
+  console.log("Marketplace:", marketplaceAddress);
+  console.log("Auction:    ", auctionAddress);
+  console.log("Factory:    ", factoryAddress);
 }
 
 main().catch((error) => {

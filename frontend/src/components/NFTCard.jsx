@@ -9,18 +9,30 @@ export default function NFTCard({
   onBuy,
 }) {
   return (
-    <div className="border rounded-xl overflow-hidden hover:shadow-lg transition">
-      <img
-        src={image}
-        className="h-56 w-full object-cover"
-        alt={name}
-      />
+    <article className="group space-y-6">
+      {/* ARTWORK */}
+      <div className="relative overflow-hidden rounded-2xl bg-[#111827]">
+        {image ? (
+          <img
+            src={image}
+            alt={name}
+            className="w-full aspect-square object-cover transition duration-500 group-hover:scale-[1.02]"
+          />
+        ) : (
+          <div className="aspect-square flex items-center justify-center text-gray-500 text-sm">
+            No Image
+          </div>
+        )}
+      </div>
 
-      <div className="p-4">
-        <h3 className="font-bold">{name}</h3>
+      {/* LABEL */}
+      <div className="px-1 space-y-2">
+        <h3 className="text-lg font-medium tracking-tight text-white">
+          {name}
+        </h3>
 
         {listed && (
-          <p className="mt-2 font-semibold">
+          <p className="text-sm text-gray-400">
             {formatEther(price)} ETH
           </p>
         )}
@@ -31,12 +43,12 @@ export default function NFTCard({
               e.preventDefault();
               onBuy();
             }}
-            className="mt-3 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+            className="mt-4 w-full py-2.5 rounded-full bg-white text-black text-sm font-medium hover:bg-gray-200 transition"
           >
-            Buy
+            Collect
           </button>
         )}
       </div>
-    </div>
+    </article>
   );
 }

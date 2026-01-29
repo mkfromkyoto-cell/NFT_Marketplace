@@ -43,7 +43,6 @@ export default function MyNFTs() {
          LOAD ALL COLLECTIONS
       ========================== */
       const collections = await factory.getAllCollections();
-
       const ownedNFTs = [];
 
       for (const collection of collections) {
@@ -68,7 +67,6 @@ export default function MyNFTs() {
             continue;
           }
 
-          /* 👉 OWNER CAN BE USER OR ESCROW */
           const listing = await market.listings(collection, tokenId);
 
           let isOwnedByUser = false;
@@ -122,37 +120,65 @@ export default function MyNFTs() {
   /* =========================
      UI
   ========================== */
+
   if (loading) {
-    return <div className="p-12 text-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Loading your collection…
+      </div>
+    );
   }
 
   if (nfts.length === 0) {
     return (
-      <div className="p-12 text-center text-gray-500">
-        You don’t own any NFTs yet
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        You don’t own any artworks yet
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">My NFTs</h1>
+    <main className="min-h-screen bg-[#0b0f19] text-white">
+      {/* HEADER */}
+      <section className="max-w-7xl mx-auto px-6 pt-28 pb-20">
+        <p className="text-xs uppercase tracking-widest text-gray-400 mb-6">
+          Private Collection
+        </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {nfts.map((nft) => (
-          <Link
-            key={`${nft.collection}-${nft.tokenId}`}
-            to={`/nft/${nft.collection}/${nft.tokenId}`}
-          >
-            <NFTCard
-              image={nft.image}
-              name={nft.name}
-              price={nft.price}
-              listed={nft.listed}
-            />
-          </Link>
-        ))}
-      </div>
-    </div>
+        <h1 className="text-4xl font-semibold tracking-tight">
+          My Artworks
+        </h1>
+
+        <p className="mt-6 max-w-2xl text-gray-300 leading-relaxed">
+          A personal archive of artworks you own or have listed for exhibition.
+        </p>
+      </section>
+
+      {/* GRID */}
+      <section className="max-w-7xl mx-auto px-6 pb-32">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-16">
+          {nfts.map((nft) => (
+            <Link
+              key={`${nft.collection}-${nft.tokenId}`}
+              to={`/nft/${nft.collection}/${nft.tokenId}`}
+              className="group"
+            >
+              <div className="space-y-4">
+                <NFTCard
+                  image={nft.image}
+                  name={nft.name}
+                  price={nft.price}
+                  listed={nft.listed}
+                />
+
+                <p className="text-sm text-gray-500 group-hover:text-white transition">
+                  View Artwork →
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }
